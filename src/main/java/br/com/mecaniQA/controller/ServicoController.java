@@ -1,5 +1,7 @@
 package br.com.mecaniQA.controller;
 
+import br.com.mecaniQA.dto.ServicoDTO;
+import br.com.mecaniQA.mapper.ServicoMapper;
 import br.com.mecaniQA.model.Servico;
 import br.com.mecaniQA.repository.ServicoRepository;
 import br.com.mecaniQA.request.ServicoRequest;
@@ -7,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/servicos")
@@ -15,7 +18,8 @@ public class ServicoController {
     private final ServicoRepository repository = ServicoRepository.getInstance();
 
     @PostMapping
-    public ResponseEntity<Servico> cadastrar(@RequestBody ServicoRequest request) {
+    public ResponseEntity<ServicoDTO> cadastrar(
+            @RequestBody ServicoRequest request) {
 
         Servico servico = new Servico();
 
@@ -25,16 +29,25 @@ public class ServicoController {
 
         Servico novoServico = repository.cadastrar(servico);
 
-        return ResponseEntity.status(201).body(novoServico);
+        return ResponseEntity
+                .status(201)
+                .body(ServicoMapper.toDTO(novoServico));
     }
 
     @GetMapping
-    public ResponseEntity<List<Servico>> listar() {
-        return ResponseEntity.ok(repository.listar());
+    public ResponseEntity<List<ServicoDTO>> listar() {
+
+        List<ServicoDTO> servicos = repository.listar()
+                .stream()
+                .map(ServicoMapper::toDTO)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(servicos);
     }
 
     @GetMapping("/{codigo}")
-    public ResponseEntity<Servico> buscarPorCodigo(@PathVariable Long codigo) {
+    public ResponseEntity<ServicoDTO> buscarPorCodigo(
+            @PathVariable Long codigo) {
 
         Servico servico = repository.buscarPorCodigo(codigo);
 
@@ -42,11 +55,11 @@ public class ServicoController {
             return ResponseEntity.notFound().build();
         }
 
-        return ResponseEntity.ok(servico);
+        return ResponseEntity.ok(ServicoMapper.toDTO(servico));
     }
 
     @PutMapping("/{codigo}")
-    public ResponseEntity<Servico> atualizar(
+    public ResponseEntity<ServicoDTO> atualizar(
             @PathVariable Long codigo,
             @RequestBody ServicoRequest request) {
 
@@ -60,11 +73,14 @@ public class ServicoController {
             return ResponseEntity.notFound().build();
         }
 
-        return ResponseEntity.ok(servicoAtualizado);
+        return ResponseEntity.ok(
+                ServicoMapper.toDTO(servicoAtualizado)
+        );
     }
 
     @DeleteMapping("/{codigo}")
-    public ResponseEntity<Void> excluir(@PathVariable Long codigo) {
+    public ResponseEntity<Void> excluir(
+            @PathVariable Long codigo) {
 
         boolean excluido = repository.excluir(codigo);
 
